@@ -1,0 +1,197 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Eorzean Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=5">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-search-wrap">
+    <input class="sidebar-search" id="sidebar-search" type="search" placeholder="Search content…" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="search-results" aria-autocomplete="list" />
+    <span class="search-result-count" id="search-result-count" hidden></span>
+    <ul class="search-results" id="search-results" role="listbox" hidden></ul>
+  </div>
+  <div class="sidebar-nav" id="sidebar-nav">
+    <div class="sidebar-section-label">Expansions</div>
+    <div class="sidebar-overall">
+      <div class="sidebar-overall-top">
+        <span>MSQ Progress</span>
+        <span id="sidebar-overall-count">0 / 0</span>
+      </div>
+      <div class="sidebar-overall-bar"><div id="sidebar-overall-fill"></div></div>
+    </div>
+    <div class="sidebar-search-empty" id="sidebar-search-empty">No matches found</div>
+  </div>
+</aside>
+
+<aside class="right-sidebar">
+  <div class="right-sidebar-logo">Eorzean Atlas</div>
+  <div id="sidebar-datetime">
+    <span class="dt-date"></span>
+    <span class="dt-time"></span>
+  </div>
+  <div id="activity-graph-wrap">
+    <div class="activity-graph-header" id="activity-graph-header">
+      <span>Activity</span>
+      <span id="activity-streak"></span>
+      <span id="activity-chev">▶</span>
+    </div>
+    <div id="activity-graph-body">
+      <svg id="activity-svg" viewBox="0 0 185 75" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+  <div id="right-sidebar-currency"></div>
+  <div class="autosave-status" id="autosave-status">✦ Autosaved</div>
+  <button id="options-btn" class="sidebar-btn">Options</button>
+  <button id="expand-all-btn" class="sidebar-btn">Expand All</button>
+  <button id="collapse-all-btn" class="sidebar-btn">Collapse All</button>
+  <div class="sidebar-disclaimer">This is a community resource. All Final Fantasy content and materials are trademarks and copyrights of Square Enix Holdings Co., Ltd. We are not affiliated with Square Enix. All content is available under GPL-3.0 license.</div>
+  <div class="sidebar-version">v2.0</div>
+</aside>
+
+<div class="main-content">
+<div class="atlas">
+  <div class="overall">
+    <div class="overall-top">
+      <span class="overall-label">MSQ Progress</span>
+      <span class="overall-count" id="overall-count">0 / 0 <span class="pct" id="overall-pct">0%</span></span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="overall-fill"></div></div>
+    <div class="scope-note">Percentage tracks Main Scenario only · dungeons, trials &amp; raids tracked separately</div>
+  </div>
+
+  <div id="atlas-body"></div>
+
+  <p class="note">Click any item to mark complete · "Mark all" bulk-checks a section · Use Save Data / Load Data in Options to keep progress across browser clears</p>
+</div>
+</div>
+
+<div id="settings-overlay" aria-hidden="true"></div>
+<div id="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title" aria-hidden="true">
+  <div class="settings-head">
+    <div id="settings-title" class="settings-title">Settings</div>
+    <button id="settings-close" class="settings-close" type="button">Close</button>
+  </div>
+  <div class="settings-body">
+    <p class="settings-note">Manage app controls and maintenance actions.</p>
+    <div class="settings-option">
+      <span class="settings-option-label">Theme</span>
+      <select id="settings-theme" class="seal-rank-select">
+        <option value="light">Eorzean Light</option>
+        <option value="paper">Basic Light</option>
+        <option value="plain">Plain Light</option>
+        <option value="azure">Crystal Blue</option>
+        <option value="charcoal">Basic Dark</option>
+        <option value="black">Plain Dark</option>
+        <option value="dark">Hydaelyn Night</option>
+      </select>
+    </div>
+    <label class="settings-option" for="settings-show-all-quests">
+      <span class="settings-option-label">Show all MSQ quests</span>
+      <input id="settings-show-all-quests" type="checkbox" />
+    </label>
+    <label class="settings-option" for="settings-hide-activity">
+      <span class="settings-option-label">Hide activity tracker</span>
+      <input id="settings-hide-activity" type="checkbox" />
+    </label>
+    <div class="settings-option">
+      <span class="settings-option-label">Grand Company</span>
+      <select id="settings-grand-company" class="seal-rank-select">
+        <option value="">Not selected</option>
+        <option value="maelstrom">Maelstrom</option>
+        <option value="twinadder">Order of the Twin Adder</option>
+        <option value="flames">Immortal Flames</option>
+      </select>
+    </div>
+    <div class="settings-option">
+      <span class="settings-option-label">Data Center Region</span>
+      <select id="settings-data-center" class="seal-rank-select"></select>
+    </div>
+    <div class="settings-option">
+      <span class="settings-option-label">Starting class</span>
+      <select id="settings-starting-class" class="seal-rank-select"></select>
+    </div>
+    <div class="settings-actions">
+      <button id="settings-save" type="button">Save Data</button>
+      <button id="settings-load" type="button">Load Data</button>
+      <button id="settings-reset" type="button">Reset Data</button>
+    </div>
+    <div class="settings-actions" style="margin-top: 10px;">
+      <button id="settings-reset-activity" type="button">Reset Activity</button>
+    </div>
+  </div>
+</div>
+
+<div id="starting-overlay" aria-hidden="true"></div>
+<div id="starting-prompt" role="dialog" aria-modal="true" aria-labelledby="starting-prompt-title" aria-hidden="true">
+  <div class="settings-head">
+    <div id="starting-prompt-title" class="settings-title">Starting Class</div>
+  </div>
+  <div class="settings-body">
+    <p class="settings-note">Which class did your Warrior of Light begin as? Your starting city follows from it — only that city's opening (A Realm Reborn, Levels 1–15) is shown.</p>
+    <div class="settings-option">
+      <span class="settings-option-label">Starting class</span>
+      <select id="starting-prompt-select" class="seal-rank-select"></select>
+    </div>
+    <div class="settings-actions">
+      <button id="starting-prompt-confirm" type="button">Confirm</button>
+      <button id="starting-prompt-skip" type="button">Skip</button>
+    </div>
+  </div>
+</div>
+
+<div id="data-center-overlay" aria-hidden="true"></div>
+<div id="data-center-prompt" role="dialog" aria-modal="true" aria-labelledby="data-center-prompt-title" aria-hidden="true">
+  <div class="settings-head">
+    <div id="data-center-prompt-title" class="settings-title">Data Center Region</div>
+  </div>
+  <div class="settings-body">
+    <p class="settings-note">Which region does your character play on? Jumbo Cactpot uses this to auto-reset at the correct draw time for your data center.</p>
+    <div class="settings-option">
+      <span class="settings-option-label">Data Center Region</span>
+      <select id="data-center-prompt-select" class="seal-rank-select"></select>
+    </div>
+    <div class="settings-actions">
+      <button id="data-center-prompt-confirm" type="button">Confirm</button>
+      <button id="data-center-prompt-skip" type="button">Skip</button>
+    </div>
+  </div>
+</div>
+
+<div id="job-history-overlay" aria-hidden="true"></div>
+<div id="job-history-panel" role="dialog" aria-modal="true" aria-labelledby="job-history-title" aria-hidden="true">
+  <div class="settings-head">
+    <div id="job-history-title" class="settings-title">Job History</div>
+    <button id="job-history-close" class="settings-close" type="button">Close</button>
+  </div>
+  <div class="settings-body">
+    <p class="settings-note" id="job-history-sub">Level progression over time.</p>
+    <div class="gil-range-row" id="job-history-range-row"></div>
+    <div id="job-history-charttype-row"></div>
+    <canvas id="job-history-graph" class="gil-graph"></canvas>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="update-notice" class="update-notice" hidden>
+  <span id="update-notice-text"></span>
+  <button id="update-notice-open" type="button">Download</button>
+  <button id="update-notice-close" type="button" aria-label="Dismiss update notice">Close</button>
+</div>
+<div id="toast"></div>
+
+<script src="savestate.js?v=10"></script>
+<script src="charts.js?v=8"></script>
+<script src="ui.js?v=17"></script>
+<script src="search.js?v=12"></script>
+<script src="startingcity.js?v=1"></script>
+<script src="datacenter.js?v=1"></script>
+<script src="app.js?v=13"></script>
+</body>
+</html>
+

@@ -1,0 +1,54 @@
+{
+  "name": "eorzean-atlas",
+  "version": "2.0.0",
+  "description": "A Windows desktop edition of Eorzean Atlas for FFXIV progress tracking.",
+  "main": "electron/main.js",
+  "author": "Sir-Lorengel",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sir-Lorengel/Eorzean-Atlas.git"
+  },
+  "homepage": "https://github.com/Sir-Lorengel/Eorzean-Atlas#readme",
+  "scripts": {
+    "dev": "electron .",
+    "verify:smoke": "node electron/verify-smoke.cjs",
+    "package": "electron-builder --win --dir",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "atlas": {
+    "releasesUrl": "https://github.com/Sir-Lorengel/Eorzean-Atlas/releases",
+    "latestReleaseApi": "https://api.github.com/repos/Sir-Lorengel/Eorzean-Atlas/releases/latest"
+  },
+  "build": {
+    "appId": "com.sirlorengel.eorzean-atlas",
+    "productName": "Eorzean Atlas",
+    "asar": true,
+    "files": [
+      "electron/**/*",
+      "build/**/*",
+      "FFXIV - Atlas.html",
+      "*.js",
+      "*.css",
+      "README.md",
+      "LICENSE",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false,
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
