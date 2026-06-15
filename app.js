@@ -80,7 +80,7 @@ async function initDesktopShell() {
   try {
     const info = await window.atlas.getAppInfo();
     const versionEl = document.querySelector('.sidebar-version');
-    if (versionEl && info.version) versionEl.textContent = `v${info.version.replace(/\.0$/, '')}`;
+    if (versionEl && info.version) versionEl.textContent = `V${info.version.replace(/\.0$/, '')}`;
   } catch {}
 
   try {
@@ -217,6 +217,22 @@ function applyActivityHidden(on) {
   if (wrap) wrap.style.display = on ? 'none' : '';
 }
 
+function applyCompactSidebar(on) {
+  document.body.classList.toggle('sidebar-compact', !!on);
+}
+
+function formatBackupStamp(iso) {
+  if (!iso) return 'Last export: never';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return 'Last export: never';
+  return `Last export: ${date.toLocaleString()}`;
+}
+
+function updateLastBackupNote() {
+  const note = document.getElementById('settings-last-backup');
+  if (note) note.textContent = formatBackupStamp(ui.lastBackupAt);
+}
+
 function openSettingsPanel() {
   const revealToggle = document.getElementById('settings-show-all-quests');
   if (revealToggle) revealToggle.checked = !!ui.showAllQuests;
@@ -224,12 +240,15 @@ function openSettingsPanel() {
   if (themeSelect) themeSelect.value = currentTheme();
   const hideActivityToggle = document.getElementById('settings-hide-activity');
   if (hideActivityToggle) hideActivityToggle.checked = !!ui.hideActivity;
+  const compactToggle = document.getElementById('settings-compact-sidebar');
+  if (compactToggle) compactToggle.checked = !!ui.compactSidebar;
   const gcSelect = document.getElementById('settings-grand-company');
   if (gcSelect) gcSelect.value = ui.grandCompany || '';
   const dataCenterSelect = document.getElementById('settings-data-center');
   if (dataCenterSelect) dataCenterSelect.value = ui.dataCenter || '';
   const startSelect = document.getElementById('settings-starting-class');
   if (startSelect) startSelect.value = ui.startingClass || '';
+  updateLastBackupNote();
   document.getElementById('settings-overlay').classList.add('open');
   document.getElementById('settings-panel').classList.add('open');
   document.getElementById('settings-overlay').setAttribute('aria-hidden', 'false');
@@ -267,6 +286,11 @@ document.getElementById('settings-hide-activity').addEventListener('change', asy
   applyActivityHidden(ui.hideActivity);
   await saveUI();
 });
+document.getElementById('settings-compact-sidebar').addEventListener('change', async e => {
+  ui.compactSidebar = !!e.target.checked;
+  applyCompactSidebar(ui.compactSidebar);
+  await saveUI();
+});
 document.getElementById('settings-grand-company').addEventListener('change', async e => {
   ui.grandCompany = e.target.value || null;
   applyGrandCompany(ui.grandCompany);
@@ -289,7 +313,7 @@ let jobHistoryRangeBuilt = false;
 function buildJobHistoryControls() {
   if (jobHistoryRangeBuilt) return;
   const rangeRow = document.getElementById('job-history-range-row');
-  [['7d','7 Days'],['30d','30 Days'],['1y','1 Year'],['all','All Time']].forEach(([r, lbl]) => {
+  [['24h','24 Hours'],['7d','7 Days'],['30d','30 Days'],['1y','1 Year'],['all','All Time']].forEach(([r, lbl]) => {
     const btn = el('button', { type: 'button', class: 'gil-range-btn' + (r === currentJobModalRange ? ' active' : ''), 'data-range': r }, lbl);
     btn.addEventListener('click', () => {
       currentJobModalRange = r;
@@ -300,7 +324,9 @@ function buildJobHistoryControls() {
     rangeRow.appendChild(btn);
   });
   document.getElementById('job-history-charttype-row')
-    .appendChild(buildChartTypeToggle('job-history-graph', renderJobHistoryGraph, () => currentJobModalRange));
+    .appendChild(buildChartTypeToggle('job-history-graph', renderJobHistoryGraph, () => currentJobModalRange, CURRENCY_CHART_TYPES));
+  document.getElementById('job-history-charttype-row')
+    .appendChild(buildTrendToggle('job-history-graph', renderJobHistoryGraph, () => currentJobModalRange));
   jobHistoryRangeBuilt = true;
 }
 
@@ -382,6 +408,107 @@ document.getElementById('collapse-all-btn').onclick = async () => {
 })();
 
 // ─── Sidebar nav ──────────────────────────────────────────────────────────
+const SIDEBAR_COMPACT_LABELS = {
+  'A Realm Reborn': 'ARR',
+  Heavensward: 'HW',
+  Stormblood: 'SB',
+  Shadowbringers: 'ShB',
+  Endwalker: 'EW',
+  Dawntrail: 'DT',
+  'MSQ Progress': 'MSQ',
+  Expansions: 'MSQ',
+  'Side Content': 'Side',
+  Guides: 'Guides',
+  'Tank Quests': 'Tank',
+  'Healer Quests': 'Heal',
+  'DPS Quests': 'DPS',
+  'Disciple of the Land': 'Land',
+  'Disciple of the Hand': 'Hand',
+  'Role Quests': 'Role',
+  'Tank Role Quests': 'Tank',
+  'Healer Role Quests': 'Heal',
+  'Melee DPS Role Quests': 'Melee',
+  'Ranged DPS Role Quests': 'Ranged',
+  'Aether Currents': 'Aether',
+  'Deep Dungeons': 'Deep',
+  'Palace of the Dead': 'PotD',
+  'Heaven-on-High': 'HoH',
+  'Eureka Orthos': 'EO',
+  'Hildebrand Quests': 'Hildi',
+  'Relic Weapons': 'Relic',
+  'Zodiac Weapons': 'Zodiac',
+  'Anima Weapons': 'Anima',
+  'Eureka Weapons': 'Eureka',
+  'Resistance Weapons': 'Resist',
+  'Manderville Weapons': 'Mande',
+  'Phantom Weapons': 'Phantom',
+  'Side Quests': 'Side',
+  'Orchestrion Rolls': 'Orch',
+  Achievements: 'Achv',
+  'Crafting & Gathering': 'Craft',
+  'Grand Company': 'GC',
+  Dungeons: 'Dung',
+  Trials: 'Trial',
+  Raids: 'Raid',
+  'Task Log': 'Tasks',
+  'Currency Tracker': 'Currency',
+  Ventures: 'Venture',
+  'Company Seals': 'Seals',
+  'Allagan Tomestones': 'Tomes',
+  Mathematics: 'Math',
+  'Wolf Mark': 'Wolf',
+  'Trophy Crystal': 'Trophy',
+  'Job Levels': 'Jobs',
+  'Physical Ranged DPS': 'Ranged',
+  Paladin: 'PLD',
+  Warrior: 'WAR',
+  'Dark Knight': 'DRK',
+  Gunbreaker: 'GNB',
+  'White Mage': 'WHM',
+  Arcanist: 'ACN',
+  Scholar: 'SCH',
+  Astrologian: 'AST',
+  Sage: 'SGE',
+  Monk: 'MNK',
+  Dragoon: 'DRG',
+  Ninja: 'NIN',
+  Samurai: 'SAM',
+  Reaper: 'RPR',
+  Viper: 'VPR',
+  Bard: 'BRD',
+  Machinist: 'MCH',
+  Dancer: 'DNC',
+  'Black Mage': 'BLM',
+  Summoner: 'SMN',
+  'Red Mage': 'RDM',
+  'Blue Mage': 'BLU',
+  Pictomancer: 'PCT',
+  Miner: 'MIN',
+  Botanist: 'BTN',
+  Fisher: 'FSH',
+  Carpenter: 'CRP',
+  Blacksmith: 'BSM',
+  Armorer: 'ARM',
+  Goldsmith: 'GSM',
+  Leatherworker: 'LTW',
+  Weaver: 'WVR',
+  Alchemist: 'ALC',
+  Culinarian: 'CUL',
+};
+
+function compactSidebarLabel(label) {
+  const text = String(label || '').trim();
+  if (!text) return '';
+  if (SIDEBAR_COMPACT_LABELS[text]) return SIDEBAR_COMPACT_LABELS[text];
+  const words = text.split(/\s+/);
+  if (words.length > 1) return words.map(word => word[0]).join('').slice(0, 6).toUpperCase();
+  return text.length > 10 ? text.slice(0, 10) : text;
+}
+
+function setCompactSidebarLabel(el, label) {
+  if (el) el.dataset.compactLabel = compactSidebarLabel(label);
+}
+
 function makeSidebarLink(href, accentVar, label, pctId, countId) {
   const link = document.createElement('a');
   link.className = 'sidebar-link';
@@ -390,7 +517,11 @@ function makeSidebarLink(href, accentVar, label, pctId, countId) {
   const dot = document.createElement('span');
   dot.className = 'sidebar-dot';
   link.appendChild(dot);
-  link.appendChild(document.createTextNode(label));
+  const labelEl = document.createElement('span');
+  labelEl.className = 'sidebar-link-label';
+  labelEl.textContent = label;
+  setCompactSidebarLabel(labelEl, label);
+  link.appendChild(labelEl);
   if (pctId) {
     if (countId) {
       const cnt = document.createElement('span');
@@ -427,8 +558,10 @@ function buildSidebarNav() {
     chev.textContent = '▶';
     title.appendChild(chev);
     const labelSpan = document.createElement('span');
+    labelSpan.className = 'sidebar-link-label';
     labelSpan.style.flex = '1';
     labelSpan.textContent = label;
+    setCompactSidebarLabel(labelSpan, label);
     title.appendChild(labelSpan);
     if (pctId) {
       const pctSpan = document.createElement('span');
@@ -455,6 +588,7 @@ function buildSidebarNav() {
   sep.className = 'sidebar-section-label';
   sep.style.marginTop = '10px';
   sep.textContent = 'Side Content';
+  setCompactSidebarLabel(sep, sep.textContent);
   nav.appendChild(sep);
 
   // Role/class groups
@@ -600,6 +734,7 @@ function buildSidebarNav() {
   sep2.className = 'sidebar-section-label';
   sep2.style.marginTop = '10px';
   sep2.textContent = 'Guides';
+  setCompactSidebarLabel(sep2, sep2.textContent);
   nav.appendChild(sep2);
 
   const guideGroups = [
@@ -651,6 +786,7 @@ function buildRightSidebarCurrency() {
   const taskLabel = document.createElement('div');
   taskLabel.className = 'sidebar-section-label right-sidebar-section-label';
   taskLabel.textContent = 'Task Log';
+  setCompactSidebarLabel(taskLabel, taskLabel.textContent);
   wrap.appendChild(taskLabel);
   wrap.appendChild(makeSidebarLink('#exp-recur', '--recur', 'Task Log'));
 
@@ -658,6 +794,7 @@ function buildRightSidebarCurrency() {
   label.className = 'sidebar-section-label right-sidebar-section-label';
   label.style.marginTop = '8px';
   label.textContent = 'Currency Tracker';
+  setCompactSidebarLabel(label, label.textContent);
   wrap.appendChild(label);
 
   const gilLink = makeSidebarLink('#exp-gil', '--ew', 'Gil');
@@ -698,6 +835,7 @@ function buildRightSidebarCurrency() {
   tomesLabel.className = 'sidebar-section-label right-sidebar-section-label';
   tomesLabel.style.marginTop = '8px';
   tomesLabel.textContent = 'Allagan Tomestones';
+  setCompactSidebarLabel(tomesLabel, tomesLabel.textContent);
   wrap.appendChild(tomesLabel);
 
   [
@@ -719,6 +857,7 @@ function buildRightSidebarCurrency() {
   pvpLabel.className = 'sidebar-section-label right-sidebar-section-label';
   pvpLabel.style.marginTop = '8px';
   pvpLabel.textContent = 'PvP';
+  setCompactSidebarLabel(pvpLabel, pvpLabel.textContent);
   wrap.appendChild(pvpLabel);
 
   [
@@ -741,6 +880,7 @@ function buildRightSidebarCurrency() {
   jobLabel.className = 'sidebar-section-label right-sidebar-section-label';
   jobLabel.style.marginTop = '8px';
   jobLabel.textContent = 'Job Levels';
+  setCompactSidebarLabel(jobLabel, jobLabel.textContent);
   wrap.appendChild(jobLabel);
 
   JOB_GROUPS.forEach(group => {
@@ -755,8 +895,10 @@ function buildRightSidebarCurrency() {
     chev.textContent = '▶';
     title.appendChild(chev);
     const labelSpan = document.createElement('span');
+    labelSpan.className = 'sidebar-link-label';
     labelSpan.style.flex = '1';
     labelSpan.textContent = group.label;
+    setCompactSidebarLabel(labelSpan, group.label);
     title.appendChild(labelSpan);
     title.addEventListener('click', () => groupEl.classList.toggle('open'));
     groupEl.appendChild(title);
@@ -799,7 +941,9 @@ function refreshJobLevels() {
     const disp = document.getElementById(`joblvl-${job.id}-display`);
     if (disp) disp.textContent = jobLevelText(job);
     const input = document.getElementById(`joblvl-${job.id}-input`);
-    if (input) input.value = '';
+    if (input) input.value = String(jobLevelCurrent(job.id) ?? 0);
+    const graphCurrent = document.getElementById(`joblvl-${job.id}-graph-current`);
+    if (graphCurrent) graphCurrent.textContent = jobLevelText(job);
   });
   // If the history modal is open, re-render it against the refreshed data.
   if (typeof currentJobModal !== 'undefined' && currentJobModal &&
@@ -878,6 +1022,7 @@ function initScrollSpy() {
   render();
   applyGrandCompany(ui.grandCompany || null);
   applyActivityHidden(!!ui.hideActivity);
+  applyCompactSidebar(!!ui.compactSidebar);
   renderActivityGraph();
   initActivityTracker();
   initScrollSpy();

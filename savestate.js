@@ -283,6 +283,41 @@ function buildSavePayload() {
   return JSON.stringify({ version: 1, checked, ui, dates, activityData, gilData, mgpData, ventureData, sealEntries, sealRank, poeticsData, mathematicsData, mnomicsData, wolfMarkData, trophyCrystalData, jobLevels }, null, 2);
 }
 
+function markBackupExported() {
+  ui.lastBackupAt = new Date().toISOString();
+  saveUI();
+  if (typeof updateLastBackupNote === 'function') updateLastBackupNote();
+}
+
+function countSeriesEntries(data) {
+  return ['gilData', 'mgpData', 'ventureData', 'sealEntries', 'poeticsData', 'mathematicsData', 'mnomicsData', 'wolfMarkData', 'trophyCrystalData']
+    .reduce((sum, key) => sum + (Array.isArray(data[key]) ? data[key].length : 0), 0);
+}
+
+function countJobLevelEntries(data) {
+  if (!data.jobLevels || typeof data.jobLevels !== 'object') return 0;
+  return Object.values(data.jobLevels).reduce((sum, entries) => sum + (Array.isArray(entries) ? entries.length : 0), 0);
+}
+
+function buildImportSummary(data) {
+  const checkedCount = data && data.checked && typeof data.checked === 'object'
+    ? Object.values(data.checked).filter(Boolean).length
+    : 0;
+  const activityDays = data && data.activityData && typeof data.activityData === 'object'
+    ? Object.keys(data.activityData).length
+    : 0;
+  return [
+    'Load this save data?',
+    '',
+    `Completed items: ${checkedCount.toLocaleString()}`,
+    `Currency entries: ${countSeriesEntries(data).toLocaleString()}`,
+    `Job level entries: ${countJobLevelEntries(data).toLocaleString()}`,
+    `Activity days: ${activityDays.toLocaleString()}`,
+    '',
+    'This will replace your current local progress.'
+  ].join('\n');
+}
+
 function saveFileNameWithIsoPrefix() {
   const iso = new Date().toISOString().replace(/:/g, '-');
   return `${iso}_ffxiv-atlas-save.json`;
@@ -303,7 +338,10 @@ async function saveToFile() {
   if (window.atlas) {
     try {
       const result = await window.atlas.saveFile({ defaultPath: fileName, content: payload });
-      if (!result.canceled) showToast(`Progress saved: ${fileName}`);
+      if (!result.canceled) {
+        markBackupExported();
+        showToast(`Progress saved: ${fileName}`);
+      }
       return;
     } catch {
       showToast('âœ¦ Could not save progress file');
@@ -320,6 +358,7 @@ async function saveToFile() {
         const sep = (baseDir.includes('\\') || /^[A-Za-z]:/.test(baseDir)) ? '\\' : '/';
         const filePath = `${baseDir}${baseDir.endsWith('/') || baseDir.endsWith('\\') ? '' : sep}${fileName}`;
         await window.Neutralino.filesystem.writeFile(filePath, payload);
+        markBackupExported();
         showToast(`Progress saved: ${fileName}`);
         return;
       }
@@ -332,6 +371,7 @@ async function saveToFile() {
   a.download = fileName;
   a.click();
   URL.revokeObjectURL(a.href);
+  markBackupExported();
   showToast(`Progress saved: ${fileName}`);
 }
 
@@ -341,6 +381,7 @@ async function loadFromFile() {
     reader.onload = (ev) => {
       try {
         const data = JSON.parse(ev.target.result);
+        if (!confirm(buildImportSummary(data))) return;
         if (data.version === 1 && data.checked) {
           checked = data.checked;
           if (data.ui) ui = data.ui;
@@ -381,6 +422,7 @@ async function loadFromFile() {
         if (typeof applyGrandCompany === 'function') applyGrandCompany(ui.grandCompany || null);
         if (typeof syncDataCenterSelection === 'function') syncDataCenterSelection();
         if (typeof applyActivityHidden === 'function') applyActivityHidden(!!ui.hideActivity);
+        if (typeof applyCompactSidebar === 'function') applyCompactSidebar(!!ui.compactSidebar);
         checkAutoReset();
         render();
         const activeGilBtn = document.querySelector('#exp-gil .gil-range-btn.active');

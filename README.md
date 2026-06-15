@@ -1,8 +1,26 @@
 # Eorzean Atlas
 
-Eorzean Atlas is a desktop progress tracker for Final Fantasy XIV. Version 2.0 is the first public release of the consolidated tracker: Main Scenario progress, side content, collectibles, currencies, recurring activities, job levels, guide notes, and exportable save data now live in one Windows Electron app.
+Eorzean Atlas is a desktop progress tracker for Final Fantasy XIV. Version 2.1 builds on the first public release of the consolidated tracker: Main Scenario progress, side content, collectibles, currencies, recurring activities, job levels, guide notes, and exportable save data now live in one Windows Electron app.
 
 It is built for players who want one persistent checklist for a whole character journey, from the opening city-state quests through Dawntrail and the long tail of optional content.
+
+## v2.1 Patch Notes - 16 June 2026
+
+This patch focuses on usability, charting, and desktop packaging polish:
+
+- Added compact side menu mode with readable abbreviated labels instead of dots-only navigation.
+- Compact mode now applies to both the left and right side menus.
+- Moved the sidebar MSQ progress summary above the Expansions heading.
+- Added expansion-colored segments to the sidebar total MSQ progress bar.
+- Updated the sidebar version display to `V2.1`.
+- Added richer currency tracker views: 24-hour range, step charts, delta charts, rolling average trend, and high-water/low-water charts.
+- Reduced graph crowding in 7-day, 30-day, 1-year, and all-time currency views by showing only the latest entry for each day.
+- Added tracker reset buttons and last-export backup status in Options.
+- Fixed Options menu button hover styling so hover colors no longer obscure button text.
+- Improved the Job Level tracker with larger retained level inputs that start at `0` and keep the latest logged value.
+- Moved job level history graphs into hover/focus cards with range, graph type, and rolling average controls.
+- Corrected Stormblood branch labels for M'naago in The Fringes and Meffrid in The Peaks.
+- Rebuilt the Windows desktop artifacts for version 2.1 and refreshed app metadata/icon handling.
 
 ## v2.0 First Release
 
@@ -56,7 +74,7 @@ Eorzean Atlas includes dedicated trackers for side quests, aether currents, deep
 
 ### Currency and Level History
 
-The app records dated history for gil, MGP, Ventures, Company Seals, Allagan Tomestones, Wolf Marks, Trophy Crystals, and job/class levels. Graphs support range filters and line/bar display modes, and every time-series tracker has an undo action for the latest entry.
+The app records dated history for gil, MGP, Ventures, Company Seals, Allagan Tomestones, Wolf Marks, Trophy Crystals, and job/class levels. Graphs support range filters, line/bar/step/delta/high-low display modes, rolling averages, daily latest-entry views, and undo/reset actions for time-series trackers.
 
 ### Recurring Tasks
 

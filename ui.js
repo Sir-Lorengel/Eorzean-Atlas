@@ -992,11 +992,34 @@ function makeUndoButton(accentColor, dataArray, storageKey, applyLatest) {
   return btn;
 }
 
-function buildChartTypeToggle(graphId, renderFn, getRange) {
+function makeResetTrackerButton(accentColor, dataArray, storageKey, applyLatest, label = 'tracker') {
+  const btn = el('button', { type: 'button', class: 'gil-undo-btn', title: `Clear all ${label} entries` }, 'Reset');
+  if (accentColor) {
+    btn.style.borderColor = accentColor;
+    btn.style.color = accentColor;
+    btn.addEventListener('mouseover', () => { btn.style.background = accentColor; btn.style.color = 'var(--bg)'; });
+    btn.addEventListener('mouseout',  () => { btn.style.background = ''; btn.style.color = accentColor; });
+  }
+  btn.addEventListener('click', () => {
+    if (!dataArray.length) { showToast('Nothing to reset'); return; }
+    if (!confirm(`Reset ${label} history? This clears all logged entries for this tracker.`)) return;
+    dataArray.length = 0;
+    store.set(storageKey, JSON.stringify(dataArray));
+    flashAutosave();
+    applyLatest(null);
+    showToast('Tracker reset');
+  });
+  return btn;
+}
+
+function buildChartTypeToggle(graphId, renderFn, getRange, types = [['line', 'Line'], ['bar', 'Bar']]) {
   const row = el('div', { class: 'gil-range-row gil-charttype-row' });
   row.appendChild(el('span', { class: 'gil-charttype-label' }, 'Graph'));
-  const current = () => (ui.chartTypes && ui.chartTypes[graphId] === 'bar') ? 'bar' : 'line';
-  [['line', 'Line'], ['bar', 'Bar']].forEach(([type, label]) => {
+  const current = () => {
+    const saved = ui.chartTypes && ui.chartTypes[graphId];
+    return types.some(([type]) => type === saved) ? saved : 'line';
+  };
+  types.forEach(([type, label]) => {
     const btn = el('button', {
       type: 'button',
       class: 'gil-range-btn gil-charttype-btn' + (current() === type ? ' active' : ''),
@@ -1012,6 +1035,27 @@ function buildChartTypeToggle(graphId, renderFn, getRange) {
     });
     row.appendChild(btn);
   });
+  return row;
+}
+
+const CURRENCY_CHART_TYPES = [['line', 'Line'], ['bar', 'Bar'], ['step', 'Step'], ['delta', 'Delta'], ['highlow', 'High/Low']];
+
+function buildTrendToggle(graphId, renderFn, getRange) {
+  const row = el('div', { class: 'gil-range-row gil-charttype-row' });
+  row.appendChild(el('span', { class: 'gil-charttype-label' }, 'Trend'));
+  const btn = el('button', {
+    type: 'button',
+    class: 'gil-range-btn gil-charttype-btn' + (ui.chartTrends && ui.chartTrends[graphId] ? ' active' : ''),
+    'data-charttrend': 'rolling',
+  }, 'Rolling Avg');
+  btn.addEventListener('click', () => {
+    if (!ui.chartTrends) ui.chartTrends = {};
+    ui.chartTrends[graphId] = !ui.chartTrends[graphId];
+    btn.classList.toggle('active', ui.chartTrends[graphId]);
+    saveUI();
+    renderFn(getRange());
+  });
+  row.appendChild(btn);
   return row;
 }
 
@@ -1043,7 +1087,7 @@ function buildGilCard() {
 
   const rangeRow = el('div', { class: 'gil-range-row' });
   let activeRange = '30d';
-  [['7d','7 Days'],['30d','30 Days'],['1y','1 Year'],['all','All Time']].forEach(([r, label]) => {
+  [['24h','24 Hours'],['7d','7 Days'],['30d','30 Days'],['1y','1 Year'],['all','All Time']].forEach(([r, label]) => {
     const btn = el('button', { type: 'button', class: 'gil-range-btn' + (r === activeRange ? ' active' : ''), 'data-range': r }, label);
     btn.addEventListener('click', () => {
       activeRange = r;
@@ -1054,7 +1098,8 @@ function buildGilCard() {
     rangeRow.appendChild(btn);
   });
   card.appendChild(rangeRow);
-  card.appendChild(buildChartTypeToggle('gil-graph', renderGilGraph, () => activeRange));
+  card.appendChild(buildChartTypeToggle('gil-graph', renderGilGraph, () => activeRange, CURRENCY_CHART_TYPES));
+  card.appendChild(buildTrendToggle('gil-graph', renderGilGraph, () => activeRange));
   card.appendChild(el('canvas', { id: 'gil-graph', class: 'gil-graph' }));
 
   const applyGil = val => {
@@ -1076,6 +1121,7 @@ function buildGilCard() {
     applyGil(val);
   });
   inputRow.appendChild(makeUndoButton('var(--ew)', gilData, GIL_KEY, applyGil));
+  inputRow.appendChild(makeResetTrackerButton('var(--ew)', gilData, GIL_KEY, applyGil, 'Gil'));
   input.addEventListener('keydown', e => { if (e.key === 'Enter') logBtn.click(); });
   requestAnimationFrame(() => renderGilGraph(activeRange));
   return card;
@@ -1111,7 +1157,7 @@ function buildMgpCard() {
 
   const rangeRow = el('div', { class: 'gil-range-row' });
   let activeRange = '30d';
-  [['7d','7 Days'],['30d','30 Days'],['1y','1 Year'],['all','All Time']].forEach(([r, label]) => {
+  [['24h','24 Hours'],['7d','7 Days'],['30d','30 Days'],['1y','1 Year'],['all','All Time']].forEach(([r, label]) => {
     const btn = el('button', { type: 'button', class: 'gil-range-btn' + (r === activeRange ? ' active' : ''), 'data-range': r }, label);
     btn.addEventListener('click', () => {
       activeRange = r;
@@ -1122,7 +1168,8 @@ function buildMgpCard() {
     rangeRow.appendChild(btn);
   });
   card.appendChild(rangeRow);
-  card.appendChild(buildChartTypeToggle('mgp-graph', renderMgpGraph, () => activeRange));
+  card.appendChild(buildChartTypeToggle('mgp-graph', renderMgpGraph, () => activeRange, CURRENCY_CHART_TYPES));
+  card.appendChild(buildTrendToggle('mgp-graph', renderMgpGraph, () => activeRange));
   card.appendChild(el('canvas', { id: 'mgp-graph', class: 'gil-graph' }));
 
   const applyMgp = val => {
@@ -1144,6 +1191,7 @@ function buildMgpCard() {
     applyMgp(val);
   });
   inputRow.appendChild(makeUndoButton('var(--shb)', mgpData, MGP_KEY, applyMgp));
+  inputRow.appendChild(makeResetTrackerButton('var(--shb)', mgpData, MGP_KEY, applyMgp, 'MGP'));
   input.addEventListener('keydown', e => { if (e.key === 'Enter') logBtn.click(); });
   requestAnimationFrame(() => renderMgpGraph(activeRange));
   return card;
@@ -1179,7 +1227,7 @@ function buildVentureCard() {
 
   const rangeRow = el('div', { class: 'gil-range-row' });
   let activeRange = '30d';
-  [['7d','7 Days'],['30d','30 Days'],['1y','1 Year'],['all','All Time']].forEach(([r, label]) => {
+  [['24h','24 Hours'],['7d','7 Days'],['30d','30 Days'],['1y','1 Year'],['all','All Time']].forEach(([r, label]) => {
     const btn = el('button', { type: 'button', class: 'gil-range-btn' + (r === activeRange ? ' active' : ''), 'data-range': r }, label);
     btn.addEventListener('click', () => {
       activeRange = r;
@@ -1190,7 +1238,8 @@ function buildVentureCard() {
     rangeRow.appendChild(btn);
   });
   card.appendChild(rangeRow);
-  card.appendChild(buildChartTypeToggle('venture-graph', renderVentureGraph, () => activeRange));
+  card.appendChild(buildChartTypeToggle('venture-graph', renderVentureGraph, () => activeRange, CURRENCY_CHART_TYPES));
+  card.appendChild(buildTrendToggle('venture-graph', renderVentureGraph, () => activeRange));
   card.appendChild(el('canvas', { id: 'venture-graph', class: 'gil-graph' }));
 
   const applyVenture = val => {
@@ -1212,6 +1261,7 @@ function buildVentureCard() {
     applyVenture(val);
   });
   inputRow.appendChild(makeUndoButton('var(--dt)', ventureData, VENTURE_KEY, applyVenture));
+  inputRow.appendChild(makeResetTrackerButton('var(--dt)', ventureData, VENTURE_KEY, applyVenture, 'Venture'));
   input.addEventListener('keydown', e => { if (e.key === 'Enter') logBtn.click(); });
   requestAnimationFrame(() => renderVentureGraph(activeRange));
   return card;
@@ -1278,7 +1328,7 @@ function buildSealCard() {
 
   const rangeRow = el('div', { class: 'gil-range-row' });
   let activeRange = '30d';
-  [['7d','7 Days'],['30d','30 Days'],['1y','1 Year'],['all','All Time']].forEach(([r, label]) => {
+  [['24h','24 Hours'],['7d','7 Days'],['30d','30 Days'],['1y','1 Year'],['all','All Time']].forEach(([r, label]) => {
     const btn = el('button', { type: 'button', class: 'gil-range-btn' + (r === activeRange ? ' active' : ''), 'data-range': r }, label);
     btn.addEventListener('click', () => {
       activeRange = r;
@@ -1289,7 +1339,8 @@ function buildSealCard() {
     rangeRow.appendChild(btn);
   });
   card.appendChild(rangeRow);
-  card.appendChild(buildChartTypeToggle('seal-graph', renderSealGraph, () => activeRange));
+  card.appendChild(buildChartTypeToggle('seal-graph', renderSealGraph, () => activeRange, CURRENCY_CHART_TYPES));
+  card.appendChild(buildTrendToggle('seal-graph', renderSealGraph, () => activeRange));
   card.appendChild(el('canvas', { id: 'seal-graph', class: 'gil-graph' }));
 
   const applySeal = val => {
@@ -1312,6 +1363,7 @@ function buildSealCard() {
     applySeal(val);
   });
   inputRow.appendChild(makeUndoButton('var(--sb)', sealEntries, SEAL_KEY, applySeal));
+  inputRow.appendChild(makeResetTrackerButton('var(--sb)', sealEntries, SEAL_KEY, applySeal, 'Company Seals'));
   input.addEventListener('keydown', e => { if (e.key === 'Enter') logBtn.click(); });
   requestAnimationFrame(() => renderSealGraph(activeRange));
   return card;
@@ -1341,7 +1393,7 @@ function buildCurrencySubSection({ label, dataArray, storageKey, cap, graphId, r
 
   const rangeRow = el('div', { class: `gil-range-row ${rangeRowClass}` });
   let activeRange = '30d';
-  [['7d','7 Days'],['30d','30 Days'],['1y','1 Year'],['all','All Time']].forEach(([r, lbl]) => {
+  [['24h','24 Hours'],['7d','7 Days'],['30d','30 Days'],['1y','1 Year'],['all','All Time']].forEach(([r, lbl]) => {
     const btn = el('button', { type: 'button', class: 'gil-range-btn' + (r === activeRange ? ' active' : ''), 'data-range': r }, lbl);
     btn.addEventListener('click', () => {
       activeRange = r;
@@ -1352,7 +1404,8 @@ function buildCurrencySubSection({ label, dataArray, storageKey, cap, graphId, r
     rangeRow.appendChild(btn);
   });
   wrap.appendChild(rangeRow);
-  wrap.appendChild(buildChartTypeToggle(graphId, renderFn, () => activeRange));
+  wrap.appendChild(buildChartTypeToggle(graphId, renderFn, () => activeRange, CURRENCY_CHART_TYPES));
+  wrap.appendChild(buildTrendToggle(graphId, renderFn, () => activeRange));
   wrap.appendChild(el('canvas', { id: graphId, class: 'gil-graph' }));
 
   const applyLatest = val => {
@@ -1371,6 +1424,7 @@ function buildCurrencySubSection({ label, dataArray, storageKey, cap, graphId, r
     applyLatest(val);
   });
   inputRow.appendChild(makeUndoButton(accent, dataArray, storageKey, applyLatest));
+  inputRow.appendChild(makeResetTrackerButton(accent, dataArray, storageKey, applyLatest, label));
   input.addEventListener('keydown', e => { if (e.key === 'Enter') logBtn.click(); });
   requestAnimationFrame(() => renderFn(activeRange));
   return wrap;
@@ -1463,19 +1517,53 @@ function buildJobLevelsCard() {
     group.jobs.forEach(job => {
       const row = el('div', { class: 'job-level-row', style: `--accent: var(${group.accent})` });
       row.appendChild(el('span', { class: 'job-level-name' }, job.name));
+      const currentLevel = jobLevelCurrent(job.id);
 
       const input = el('input', {
         type: 'number', class: 'job-level-input', id: `joblvl-${job.id}-input`,
-        min: '0', max: String(job.max), placeholder: 'Lv',
+        min: '0', max: String(job.max), value: String(currentLevel ?? 0),
+        'aria-label': `${job.name} current level`,
       });
 
       const display = el('span', { class: 'job-level-display', id: `joblvl-${job.id}-display` }, jobLevelText(job));
+      const graphId = `joblvl-${job.id}-graph`;
+      let activeRange = '30d';
+      const renderHoverGraph = () => renderJobLevelGraph(job, group.accent, graphId, activeRange);
+      const graphWrap = el('div', { class: 'job-level-graph-wrap' });
+      const popover = el('div', { class: 'job-level-graph-card', style: `--accent: var(${group.accent})` });
+      popover.appendChild(el('div', { class: 'job-level-graph-head' },
+        el('span', {}, `${job.name} History`),
+        el('span', { class: 'job-level-graph-current', id: `joblvl-${job.id}-graph-current` }, jobLevelText(job))
+      ));
+      const rangeRow = el('div', { class: 'gil-range-row job-level-graph-ranges' });
+      [['24h','24 Hours'],['7d','7 Days'],['30d','30 Days'],['1y','1 Year'],['all','All Time']].forEach(([r, lbl]) => {
+        const btn = el('button', { type: 'button', class: 'gil-range-btn' + (r === activeRange ? ' active' : ''), 'data-range': r }, lbl);
+        btn.addEventListener('click', () => {
+          activeRange = r;
+          rangeRow.querySelectorAll('.gil-range-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          renderHoverGraph();
+        });
+        rangeRow.appendChild(btn);
+      });
+      popover.appendChild(rangeRow);
+      popover.appendChild(buildChartTypeToggle(graphId, renderHoverGraph, () => activeRange, CURRENCY_CHART_TYPES));
+      popover.appendChild(buildTrendToggle(graphId, renderHoverGraph, () => activeRange));
+      popover.appendChild(el('canvas', { id: graphId, class: 'gil-graph job-level-graph' }));
+      const primeGraph = () => requestAnimationFrame(renderHoverGraph);
+      graphWrap.addEventListener('mouseenter', primeGraph);
+      graphWrap.addEventListener('focusin', primeGraph);
 
       const histBtn = el('button', {
-        type: 'button', class: 'job-level-hist-btn',
+        type: 'button', class: 'job-level-hist-btn job-level-graph-btn',
         title: `View ${job.name} level history`, 'aria-label': `View ${job.name} level history`,
       }, '📈');
-      histBtn.addEventListener('click', () => openJobHistory(job, group.accent));
+      histBtn.addEventListener('click', e => {
+        e.preventDefault();
+        graphWrap.classList.toggle('open');
+        primeGraph();
+      });
+      graphWrap.append(histBtn, popover);
 
       const undoBtn = el('button', {
         type: 'button', class: 'job-level-hist-btn',
@@ -1485,23 +1573,27 @@ function buildJobLevelsCard() {
       // Repaint this job's card display, sidebar value, and (if open) modal.
       const refreshJob = () => {
         display.textContent = jobLevelText(job);
+        input.value = String(jobLevelCurrent(job.id) ?? 0);
+        const graphCurrent = document.getElementById(`joblvl-${job.id}-graph-current`);
+        if (graphCurrent) graphCurrent.textContent = jobLevelText(job);
         const sb = document.getElementById(`sidebar-joblvl-${job.id}-amount`);
         if (sb) sb.textContent = jobLevelText(job);
         if (currentJobModal && currentJobModal.id === job.id) renderJobHistoryGraph(currentJobModalRange);
+        renderHoverGraph();
       };
 
       // Logging a level appends a dated entry to the job's time series.
       const commit = () => {
         const raw = input.value.trim();
-        if (raw === '') return;
+        if (raw === '') { input.value = String(jobLevelCurrent(job.id) ?? 0); return; }
         let val = parseInt(raw, 10);
-        if (isNaN(val)) { input.value = ''; return; }
+        if (isNaN(val)) { input.value = String(jobLevelCurrent(job.id) ?? 0); return; }
         val = Math.max(0, Math.min(job.max, val));
         if (!Array.isArray(jobLevels[job.id])) jobLevels[job.id] = [];
         jobLevels[job.id].push({ date: new Date().toISOString(), amount: val });
         saveJobLevels();
         flashAutosave();
-        input.value = '';
+        input.value = String(val);
         refreshJob();
       };
       input.addEventListener('change', commit);
@@ -1518,7 +1610,7 @@ function buildJobLevelsCard() {
         showToast('✦ Last entry removed');
       });
 
-      row.append(input, display, histBtn, undoBtn);
+      row.append(input, display, graphWrap, undoBtn);
       grid.appendChild(row);
     });
     section.appendChild(grid);
@@ -2235,23 +2327,28 @@ function renderAtlasCounts() {
   document.getElementById('overall-pct').textContent = `${pct}%`;
   const sidebarOverallCount = document.getElementById('sidebar-overall-count');
   if (sidebarOverallCount) sidebarOverallCount.textContent = `${doneMsq} / ${totalMsq} ${pct}%`;
-  const sidebarOverallFill = document.getElementById('sidebar-overall-fill');
-  if (sidebarOverallFill) sidebarOverallFill.style.width = `${pct}%`;
+
+  const renderOverallSegments = fillEl => {
+    if (!fillEl) return;
+    fillEl.innerHTML = '';
+    expSegData.forEach(({ exp, eMsqDone, eMsqTotal }) => {
+      const segPct = Math.round((eMsqDone / eMsqTotal) * 100);
+      const seg = document.createElement('div');
+      seg.className = 'progress-seg';
+      seg.style.flex = String(eMsqTotal);
+      const segFill = document.createElement('div');
+      segFill.className = 'progress-seg-fill';
+      segFill.style.width = `${segPct}%`;
+      segFill.style.background = `var(--${exp.accent})`;
+      seg.appendChild(segFill);
+      fillEl.appendChild(seg);
+    });
+  };
 
   const overallFill = document.getElementById('overall-fill');
-  overallFill.innerHTML = '';
-  expSegData.forEach(({ exp, eMsqDone, eMsqTotal }) => {
-    const segPct = Math.round((eMsqDone / eMsqTotal) * 100);
-    const seg = document.createElement('div');
-    seg.className = 'progress-seg';
-    seg.style.flex = String(eMsqTotal);
-    const segFill = document.createElement('div');
-    segFill.className = 'progress-seg-fill';
-    segFill.style.width = `${segPct}%`;
-    segFill.style.background = `var(--${exp.accent})`;
-    seg.appendChild(segFill);
-    overallFill.appendChild(seg);
-  });
+  renderOverallSegments(overallFill);
+  const sidebarOverallFill = document.getElementById('sidebar-overall-fill');
+  renderOverallSegments(sidebarOverallFill);
 }
 
 // Recompute the four role-quest cards plus their combined sidebar percentage.

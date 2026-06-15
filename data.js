@@ -3061,11 +3061,11 @@ const FFXIV_DATA = {
                 "preCount": 5,
                 "branches": [
                   {
-                    "label": "M'naago — Ala Mhigo",
+                    "label": "M'naago — The Fringes",
                     "count": 4
                   },
                   {
-                    "label": "Meffrid — Doma",
+                    "label": "Meffrid — The Peaks",
                     "count": 8
                   }
                 ]

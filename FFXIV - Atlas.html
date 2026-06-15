@@ -17,7 +17,6 @@
     <ul class="search-results" id="search-results" role="listbox" hidden></ul>
   </div>
   <div class="sidebar-nav" id="sidebar-nav">
-    <div class="sidebar-section-label">Expansions</div>
     <div class="sidebar-overall">
       <div class="sidebar-overall-top">
         <span>MSQ Progress</span>
@@ -25,6 +24,7 @@
       </div>
       <div class="sidebar-overall-bar"><div id="sidebar-overall-fill"></div></div>
     </div>
+    <div class="sidebar-section-label" data-compact-label="MSQ">Expansions</div>
     <div class="sidebar-search-empty" id="sidebar-search-empty">No matches found</div>
   </div>
 </aside>
@@ -47,11 +47,11 @@
   </div>
   <div id="right-sidebar-currency"></div>
   <div class="autosave-status" id="autosave-status">✦ Autosaved</div>
-  <button id="options-btn" class="sidebar-btn">Options</button>
-  <button id="expand-all-btn" class="sidebar-btn">Expand All</button>
-  <button id="collapse-all-btn" class="sidebar-btn">Collapse All</button>
+  <button id="options-btn" class="sidebar-btn" data-compact-label="Options">Options</button>
+  <button id="expand-all-btn" class="sidebar-btn" data-compact-label="Expand">Expand All</button>
+  <button id="collapse-all-btn" class="sidebar-btn" data-compact-label="Collapse">Collapse All</button>
   <div class="sidebar-disclaimer">This is a community resource. All Final Fantasy content and materials are trademarks and copyrights of Square Enix Holdings Co., Ltd. We are not affiliated with Square Enix. All content is available under GPL-3.0 license.</div>
-  <div class="sidebar-version">v2.0</div>
+  <div class="sidebar-version">V2.1</div>
 </aside>
 
 <div class="main-content">
@@ -99,6 +99,10 @@
       <span class="settings-option-label">Hide activity tracker</span>
       <input id="settings-hide-activity" type="checkbox" />
     </label>
+    <label class="settings-option" for="settings-compact-sidebar">
+      <span class="settings-option-label">Compact side menu</span>
+      <input id="settings-compact-sidebar" type="checkbox" />
+    </label>
     <div class="settings-option">
       <span class="settings-option-label">Grand Company</span>
       <select id="settings-grand-company" class="seal-rank-select">
@@ -121,6 +125,7 @@
       <button id="settings-load" type="button">Load Data</button>
       <button id="settings-reset" type="button">Reset Data</button>
     </div>
+    <p class="settings-backup-note" id="settings-last-backup">Last export: never</p>
     <div class="settings-actions" style="margin-top: 10px;">
       <button id="settings-reset-activity" type="button">Reset Activity</button>
     </div>
