@@ -1,6 +1,7 @@
 'use strict';
 
 const { app, BrowserWindow, Menu, dialog, ipcMain, protocol, shell } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -28,6 +29,14 @@ const pkg = require('../package.json');
 let dataCache = null;
 let mainWindow = null;
 const smokeMode = process.argv.includes('--atlas-smoke');
+let updateState = {
+  status: 'idle',
+  currentVersion: pkg.version,
+  latestVersion: null,
+  updateAvailable: false,
+  releaseUrl: pkg.atlas.releasesUrl,
+};
+let updateCheckInFlight = null;
 
 const rendererFiles = new Set([
   'FFXIV - Atlas.html',
@@ -117,6 +126,121 @@ async function checkForUpdates() {
     updateAvailable: compareVersions(latestVersion, pkg.version) > 0,
     releaseUrl,
   };
+}
+
+function publishUpdateState(patch) {
+  updateState = {
+    ...updateState,
+    ...patch,
+    currentVersion: pkg.version,
+    releaseUrl: patch && patch.releaseUrl ? patch.releaseUrl : updateState.releaseUrl || pkg.atlas.releasesUrl,
+  };
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('atlas:update-status', updateState);
+  }
+
+  return updateState;
+}
+
+function releaseUrlFromInfo(info) {
+  if (info && Array.isArray(info.files) && info.files.length && info.files[0].url) {
+    return info.files[0].url;
+  }
+  return pkg.atlas.releasesUrl;
+}
+
+function configureAutoUpdater() {
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.allowPrerelease = false;
+
+  autoUpdater.on('checking-for-update', () => {
+    publishUpdateState({ status: 'checking', error: null });
+  });
+
+  autoUpdater.on('update-available', info => {
+    publishUpdateState({
+      status: 'downloading',
+      latestVersion: normalizeVersion(info && info.version),
+      updateAvailable: true,
+      releaseUrl: releaseUrlFromInfo(info),
+      error: null,
+    });
+  });
+
+  autoUpdater.on('update-not-available', info => {
+    publishUpdateState({
+      status: 'up-to-date',
+      latestVersion: normalizeVersion(info && info.version) || pkg.version,
+      updateAvailable: false,
+      error: null,
+    });
+  });
+
+  autoUpdater.on('download-progress', progress => {
+    publishUpdateState({
+      status: 'downloading',
+      progress: Math.round(progress.percent || 0),
+      error: null,
+    });
+  });
+
+  autoUpdater.on('update-downloaded', info => {
+    publishUpdateState({
+      status: 'ready',
+      latestVersion: normalizeVersion(info && info.version) || updateState.latestVersion,
+      updateAvailable: true,
+      progress: 100,
+      releaseUrl: releaseUrlFromInfo(info),
+      error: null,
+    });
+  });
+
+  autoUpdater.on('error', error => {
+    publishUpdateState({
+      status: 'error',
+      error: error && error.message ? error.message : 'Update check failed',
+    });
+  });
+}
+
+async function checkForAutomaticUpdates() {
+  if (smokeMode) return updateState;
+
+  if (!app.isPackaged) {
+    try {
+      const update = await checkForUpdates();
+      return publishUpdateState({
+        status: update.updateAvailable ? 'manual-update-available' : 'up-to-date',
+        latestVersion: update.latestVersion,
+        updateAvailable: update.updateAvailable,
+        releaseUrl: update.releaseUrl,
+        error: null,
+      });
+    } catch (error) {
+      return publishUpdateState({
+        status: 'error',
+        error: error && error.message ? error.message : 'Update check failed',
+      });
+    }
+  }
+
+  if (!updateCheckInFlight) {
+    updateCheckInFlight = autoUpdater.checkForUpdates()
+      .catch(error => {
+        publishUpdateState({
+          status: 'error',
+          error: error && error.message ? error.message : 'Update check failed',
+        });
+      })
+      .finally(() => {
+        updateCheckInFlight = null;
+      });
+  }
+
+  await updateCheckInFlight;
+  return updateState;
 }
 
 function registerProtocol() {
@@ -219,7 +343,7 @@ function createWindow() {
           fs.writeFileSync(process.env.ATLAS_SMOKE_RESULT, JSON.stringify(result), 'utf8');
         }
         console.log(`[atlas-smoke] ${JSON.stringify(result)}`);
-        app.quit();
+        app.exit(0);
       } catch (error) {
         clearTimeout(smokeTimer);
         if (process.env.ATLAS_SMOKE_RESULT) {
@@ -239,6 +363,7 @@ function createWindow() {
 app.whenReady().then(() => {
   app.setAppUserModelId('com.sirlorengel.eorzean-atlas');
   registerProtocol();
+  configureAutoUpdater();
   Menu.setApplicationMenu(null);
 
   ipcMain.handle('atlas:get-data', () => readAtlasData());
@@ -246,7 +371,13 @@ app.whenReady().then(() => {
     version: pkg.version,
     releasesUrl: pkg.atlas.releasesUrl,
   }));
-  ipcMain.handle('atlas:check-for-updates', () => checkForUpdates());
+  ipcMain.handle('atlas:get-update-state', () => updateState);
+  ipcMain.handle('atlas:check-for-updates', () => checkForAutomaticUpdates());
+  ipcMain.handle('atlas:install-update', () => {
+    if (!app.isPackaged || updateState.status !== 'ready') return false;
+    setImmediate(() => autoUpdater.quitAndInstall(false, true));
+    return true;
+  });
   ipcMain.handle('atlas:open-external', (_event, url) => {
     const parsed = new URL(url);
     if (!['https:', 'http:'].includes(parsed.protocol)) throw new Error('Unsupported URL');
@@ -277,6 +408,7 @@ app.whenReady().then(() => {
   });
 
   createWindow();
+  setTimeout(() => { checkForAutomaticUpdates(); }, 3000);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

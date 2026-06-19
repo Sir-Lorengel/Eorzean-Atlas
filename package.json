@@ -1,6 +1,6 @@
 {
   "name": "eorzean-atlas",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "A Windows desktop edition of Eorzean Atlas for FFXIV progress tracking.",
   "main": "electron/main.js",
   "author": "Sir-Lorengel",
@@ -40,15 +40,25 @@
     ],
     "win": {
       "icon": "build/icon.ico",
-      "sign": "electron/noop-sign.js",
+      "signAndEditExecutable": false,
       "target": [
         "nsis",
         "portable"
       ]
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Sir-Lorengel",
+        "repo": "Eorzean-Atlas"
+      }
+    ],
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
     }
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
   }
 }

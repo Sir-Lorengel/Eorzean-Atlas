@@ -77,6 +77,58 @@ async function loadData() {
 async function initDesktopShell() {
   if (!window.atlas) return;
 
+  const notice = document.getElementById('update-notice');
+  const text = document.getElementById('update-notice-text');
+  const open = document.getElementById('update-notice-open');
+  const close = document.getElementById('update-notice-close');
+
+  const hideUpdateNotice = () => {
+    if (notice) notice.hidden = true;
+  };
+
+  const renderUpdateNotice = update => {
+    if (!notice || !text || !open || !close || !update) return;
+
+    open.hidden = false;
+    open.disabled = false;
+    open.onclick = null;
+    close.onclick = hideUpdateNotice;
+
+    if (update.status === 'manual-update-available') {
+      text.textContent = `Update available: v${update.latestVersion}`;
+      open.textContent = 'Download';
+      open.onclick = () => window.atlas.openExternal(update.releaseUrl);
+      notice.hidden = false;
+      return;
+    }
+
+    if (update.status === 'downloading') {
+      const progress = Number.isFinite(update.progress) ? ` ${update.progress}%` : '';
+      text.textContent = `Downloading update${progress}`;
+      open.hidden = true;
+      notice.hidden = false;
+      return;
+    }
+
+    if (update.status === 'ready') {
+      text.textContent = `Update ready: v${update.latestVersion}`;
+      open.textContent = 'Restart';
+      open.onclick = () => window.atlas.installUpdate();
+      notice.hidden = false;
+      return;
+    }
+
+    if (update.updateAvailable && update.releaseUrl) {
+      text.textContent = `Update available: v${update.latestVersion}`;
+      open.textContent = 'Download';
+      open.onclick = () => window.atlas.openExternal(update.releaseUrl);
+      notice.hidden = false;
+      return;
+    }
+
+    hideUpdateNotice();
+  };
+
   try {
     const info = await window.atlas.getAppInfo();
     const versionEl = document.querySelector('.sidebar-version');
@@ -84,17 +136,10 @@ async function initDesktopShell() {
   } catch {}
 
   try {
+    if (window.atlas.onUpdateStatus) window.atlas.onUpdateStatus(renderUpdateNotice);
+    if (window.atlas.getUpdateState) renderUpdateNotice(await window.atlas.getUpdateState());
     const update = await window.atlas.checkForUpdates();
-    if (!update.updateAvailable) return;
-    const notice = document.getElementById('update-notice');
-    const text = document.getElementById('update-notice-text');
-    const open = document.getElementById('update-notice-open');
-    const close = document.getElementById('update-notice-close');
-    if (!notice || !text || !open || !close) return;
-    text.textContent = `Update available: v${update.latestVersion}`;
-    notice.hidden = false;
-    open.onclick = () => window.atlas.openExternal(update.releaseUrl);
-    close.onclick = () => { notice.hidden = true; };
+    renderUpdateNotice(update);
   } catch {
     // Update checks should never block the tracker.
   }

@@ -1,8 +1,19 @@
 # Eorzean Atlas
 
-Eorzean Atlas is a desktop progress tracker for Final Fantasy XIV. Version 2.1 builds on the first public release of the consolidated tracker: Main Scenario progress, side content, collectibles, currencies, recurring activities, job levels, guide notes, and exportable save data now live in one Windows Electron app.
+Eorzean Atlas is a desktop progress tracker for Final Fantasy XIV. Version 2.1.1 builds on the first public release of the consolidated tracker: Main Scenario progress, side content, collectibles, currencies, recurring activities, job levels, guide notes, and exportable save data now live in one Windows Electron app.
 
 It is built for players who want one persistent checklist for a whole character journey, from the opening city-state quests through Dawntrail and the long tail of optional content.
+
+## v2.1.1 Patch Notes - 19 June 2026
+
+This patch adds automatic desktop update handling for Windows release builds:
+
+- Added automatic update checks through GitHub releases for packaged desktop builds.
+- Updates now download in the background and show a restart prompt once ready to install.
+- Reused the existing update notice for download progress, ready-to-restart state, and manual release links.
+- Added safe preload APIs for update status events and install/restart actions.
+- Added Electron Builder publish metadata so release builds can generate updater metadata.
+- Kept the manual GitHub release link fallback for development builds.
 
 ## v2.1 Patch Notes - 16 June 2026
 
@@ -40,7 +51,7 @@ This release brings the existing tracker features together under the Eorzean Atl
 - Activity heatmap and streak display, with reset and hide controls.
 - File-based save and load, plus local autosave.
 - Theme selector with light, plain, Crystal Blue, dark, and Hydaelyn Night variants.
-- Desktop update notice linked to GitHub releases.
+- Desktop auto-updates from GitHub releases, with a manual release link fallback in development.
 
 ## Tracker Coverage
 
