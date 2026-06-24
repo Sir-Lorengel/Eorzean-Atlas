@@ -216,6 +216,7 @@ function ensureTaskQuestIndex() {
   if (typeof ORCHESTRION_DATA !== 'undefined' && ORCHESTRION_DATA) addTaskQuestIndexSections(ORCHESTRION_DATA);
   if (typeof MOUNTS_DATA !== 'undefined' && MOUNTS_DATA) addTaskQuestIndexSections(MOUNTS_DATA);
   if (typeof MINIONS_DATA !== 'undefined' && MINIONS_DATA) addTaskQuestIndexSections(MINIONS_DATA);
+  if (typeof TRIPLE_TRIAD_DATA !== 'undefined' && TRIPLE_TRIAD_DATA) addTaskQuestIndexSections(TRIPLE_TRIAD_DATA);
 
   return TASK_QUEST_ID_INDEX;
 }
@@ -1887,6 +1888,60 @@ function renderMinionsCounts() {
   if (sbPct) sbPct.textContent = `${pct}%`;
 }
 
+function buildTripleTriadCard() {
+  const card = el('div', { class: 'expansion', id: 'exp-triple-triad', 'data-exp': 'triple-triad', style: '--accent: var(--recur);' });
+  card.appendChild(
+    el('div', { class: 'exp-header' },
+      el('div', { class: 'exp-title' },
+        el('div', { class: 'exp-num' }, 'Side Content'),
+        el('div', { class: 'exp-name', html: 'Triple Triad <em>Cards</em>' })
+      )
+    )
+  );
+  card.appendChild(el('div', { class: 'exp-progress-row' },
+    el('div', { class: 'exp-progress-bar' },
+      el('div', { class: 'exp-progress-fill', 'data-card-fill': 'triple-triad' })
+    ),
+    el('span', { class: 'exp-pct', 'data-card-pct': 'triple-triad' }, '0%')
+  ));
+  card.appendChild(el('p', { class: 'exp-tagline' },
+    'Collect Triple Triad cards from NPCs, the Gold Saucer, duties, achievements, and other side content. Data sourced from the FFXIV Community Wiki.'
+  ));
+
+  const content = el('div', { class: 'exp-content exp-content-stack' });
+  if (typeof TRIPLE_TRIAD_DATA !== 'undefined' && TRIPLE_TRIAD_DATA) {
+    TRIPLE_TRIAD_DATA.forEach(sec => content.appendChild(buildSection(sec, true)));
+  } else {
+    content.appendChild(el('p', { class: 'future-note' }, 'Triple Triad card data unavailable.'));
+  }
+  card.appendChild(content);
+  return card;
+}
+
+function renderTripleTriadCounts() {
+  if (typeof TRIPLE_TRIAD_DATA === 'undefined' || !TRIPLE_TRIAD_DATA) return;
+  let grandDone = 0, grandTotal = 0;
+  TRIPLE_TRIAD_DATA.forEach(sec => {
+    const n = sec.quests.length;
+    let done = 0;
+    for (let i = 0; i < n; i++) if (checked[`${sec.id}-${i}`]) done++;
+    grandDone += done; grandTotal += n;
+    const sc = cachedSel(`[data-section-count="${sec.id}"]`);
+    if (sc) sc.firstChild.nodeValue = `${done}`;
+    const mb = cachedSel(`[data-mass-btn="${sec.id}"]`);
+    if (mb) mb.textContent = (done === n && n) ? 'Clear section' : 'Mark all complete';
+    const sbCat = cachedSel(`[data-sidebar-pct="${sec.id}"]`);
+    if (sbCat) sbCat.textContent = n ? `${Math.round((done / n) * 100)}%` : '0%';
+  });
+  const pct = grandTotal ? Math.round((grandDone / grandTotal) * 100) : 0;
+  const fill = document.querySelector('[data-card-fill="triple-triad"]');
+  if (fill) fill.style.width = `${pct}%`;
+  const pctEl = document.querySelector('[data-card-pct="triple-triad"]');
+  if (pctEl) pctEl.textContent = `${pct}%`;
+  const sbPct = document.querySelector('[data-sidebar-pct="triple-triad"]');
+  if (sbPct) sbPct.textContent = `${pct}%`;
+}
+
 // Achievement sections excluded from percentage maths (still shown/tickable).
 // Seasonal Events are time-limited and missable, so counting them would make
 // 100% effectively unreachable for most players.
@@ -2037,6 +2092,7 @@ function build() {
   root.appendChild(buildOrchestrionCard());
   root.appendChild(buildMountsCard());
   root.appendChild(buildMinionsCard());
+  root.appendChild(buildTripleTriadCard());
   root.appendChild(buildAchievementsCard());
   root.appendChild(buildTankCard());
   root.appendChild(buildHealerCard());
@@ -2441,6 +2497,7 @@ function render() {
   renderOrchestrionCounts();
   renderMountsCounts();
   renderMinionsCounts();
+  renderTripleTriadCounts();
   renderAchievementCounts();
   renderRecurCounts();
   renderAetherCounts();
@@ -2519,6 +2576,10 @@ function buildRenderIndex() {
     MINIONS_DATA.forEach(sec => sec.quests.forEach((_, i) => RENDER_INDEX.set(`${sec.id}-${i}`, { group: 'minions' })));
   }
 
+  if (typeof TRIPLE_TRIAD_DATA !== 'undefined' && TRIPLE_TRIAD_DATA) {
+    TRIPLE_TRIAD_DATA.forEach(sec => sec.quests.forEach((_, i) => RENDER_INDEX.set(`${sec.id}-${i}`, { group: 'triple-triad' })));
+  }
+
   AETHER_CURRENTS_DATA.forEach(exp => exp.zones.forEach(zone => {
     for (let i = 0; i < zone.exploration; i++) RENDER_INDEX.set(`${zone.id}-e-${i}`, { group: 'aether' });
     zone.quests.forEach((_, i) => RENDER_INDEX.set(`${zone.id}-q-${i}`, { group: 'aether' }));
@@ -2565,6 +2626,9 @@ function renderScoped(id) {
       break;
     case 'minions':
       renderMinionsCounts();
+      break;
+    case 'triple-triad':
+      renderTripleTriadCounts();
       break;
     case 'aether':
       renderAetherCounts();

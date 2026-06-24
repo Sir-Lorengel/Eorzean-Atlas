@@ -1,8 +1,15 @@
 # Eorzean Atlas
 
-Eorzean Atlas is a desktop progress tracker for Final Fantasy XIV. Version 2.1.1 builds on the first public release of the consolidated tracker: Main Scenario progress, side content, collectibles, currencies, recurring activities, job levels, guide notes, and exportable save data now live in one Windows Electron app.
+Eorzean Atlas is a desktop progress tracker for Final Fantasy XIV. Version 2.2 builds on the first public release of the consolidated tracker: Main Scenario progress, side content, collectibles, currencies, recurring activities, job levels, guide notes, and exportable save data now live in one Windows Electron app.
 
 It is built for players who want one persistent checklist for a whole character journey, from the opening city-state quests through Dawntrail and the long tail of optional content.
+
+## v2.2 Patch Notes - 24 June 2026
+
+This patch adds another Gold Saucer collection tracker:
+
+- Added a Triple Triad card tracker sourced from the FFXIV Community Wiki, grouped by acquisition type.
+- Rebuilt the Windows desktop artifacts for version 2.2.
 
 ## v2.1.1 Patch Notes - 19 June 2026
 
@@ -64,6 +71,7 @@ The v2.0 data set includes:
 - 932 orchestrion rolls.
 - 348 mounts.
 - 579 minions.
+- 475 Triple Triad cards.
 - 301 aether current objectives across 30 zones.
 - 1,158 class, job, crafter, and gatherer quest checklist items.
 - 84 role quest checklist items.
@@ -81,7 +89,7 @@ Track each expansion separately with MSQ-only completion percentages, section pr
 
 ### Side Content
 
-Eorzean Atlas includes dedicated trackers for side quests, aether currents, deep dungeons, Hildibrand quests, relic weapons, job and role quests, achievements, orchestrion rolls, mounts, and minions.
+Eorzean Atlas includes dedicated trackers for side quests, aether currents, deep dungeons, Hildibrand quests, relic weapons, job and role quests, achievements, orchestrion rolls, mounts, minions, and Triple Triad cards.
 
 ### Currency and Level History
 

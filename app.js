@@ -18,7 +18,7 @@ let ATLAS,
     AETHER_CURRENTS_DATA, AETHER_CURRENT_MSQ_QUESTS, AETHER_UNLOCK_MSQ_QUESTS,
     GC_RANKS, MSQ_UNLOCK_MARKERS, CLASS_UNLOCK_MARKERS, MSQ_FEATURE_MARKERS,
     ACHIEVEMENTS_DATA,
-    ORCHESTRION_DATA, MOUNTS_DATA, MINIONS_DATA, STARTING_CITY_CHAINS;
+    ORCHESTRION_DATA, MOUNTS_DATA, MINIONS_DATA, TRIPLE_TRIAD_DATA, STARTING_CITY_CHAINS;
 
 async function loadData() {
   const payload = window.atlas ? await window.atlas.getData() : { FFXIV_DATA };
@@ -71,6 +71,7 @@ async function loadData() {
   ORCHESTRION_DATA     = payload.ORCHESTRION_DATA || null;
   MOUNTS_DATA          = payload.MOUNTS_DATA || null;
   MINIONS_DATA         = payload.MINIONS_DATA || null;
+  TRIPLE_TRIAD_DATA    = payload.TRIPLE_TRIAD_DATA || null;
   STARTING_CITY_CHAINS = payload.STARTING_CITY_CHAINS || null;
 }
 
@@ -762,6 +763,12 @@ function buildSidebarNav() {
     nav.appendChild(makeCollapsibleGroup('Minions', '--recur',
       MINIONS_DATA.map(sec => makeSidebarLink('#exp-minions', '--recur', sec.title, sec.id)),
       'minions'
+    ));
+  }
+  if (typeof TRIPLE_TRIAD_DATA !== 'undefined' && TRIPLE_TRIAD_DATA) {
+    nav.appendChild(makeCollapsibleGroup('Triple Triad Cards', '--recur',
+      TRIPLE_TRIAD_DATA.map(sec => makeSidebarLink('#exp-triple-triad', '--recur', sec.title, sec.id)),
+      'triple-triad'
     ));
   }
   nav.appendChild(makeCollapsibleGroup('Achievements', '--recur', [

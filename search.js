@@ -212,6 +212,7 @@ const GROUP_WEIGHT = {
   'Mounts':             2,
   'Minions':            2,
   'Orchestrion Rolls':  2,
+  'Triple Triad Cards': 2,
   'Achievements':       1,
 };
 
@@ -332,6 +333,14 @@ function buildSearchIndex() {
       add(sec.title, 'Sections', 'Orchestrion Rolls', `.section[data-section="${sec.id}"]`);
       sec.quests.forEach((q, i) =>
         add(labelOfQuest(q), 'Orchestrion Rolls', sec.title, `[data-id="${sec.id}-${i}"]`, q && q.tag));
+    });
+  }
+
+  if (typeof TRIPLE_TRIAD_DATA !== 'undefined' && TRIPLE_TRIAD_DATA) {
+    TRIPLE_TRIAD_DATA.forEach(sec => {
+      add(sec.title, 'Sections', 'Triple Triad Cards', `.section[data-section="${sec.id}"]`);
+      sec.quests.forEach((q, i) =>
+        add(labelOfQuest(q), 'Triple Triad Cards', sec.title, `[data-id="${sec.id}-${i}"]`, q && q.tag));
     });
   }
 

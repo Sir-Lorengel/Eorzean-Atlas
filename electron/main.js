@@ -84,7 +84,7 @@ function resolveAppFile(requestUrl) {
 async function readAtlasData() {
   if (dataCache) return dataCache;
   const dataSource = await fs.promises.readFile(path.join(rootDir, 'data.js'), 'utf8');
-  const script = new vm.Script(`${dataSource}\n({ FFXIV_DATA, ORCHESTRION_DATA, MOUNTS_DATA, MINIONS_DATA, STARTING_CITY_CHAINS });`, { filename: 'data.js' });
+  const script = new vm.Script(`${dataSource}\n({ FFXIV_DATA, ORCHESTRION_DATA, MOUNTS_DATA, MINIONS_DATA, TRIPLE_TRIAD_DATA, STARTING_CITY_CHAINS });`, { filename: 'data.js' });
   dataCache = script.runInNewContext(Object.freeze({}));
   return dataCache;
 }
